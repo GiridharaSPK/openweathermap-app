@@ -1,18 +1,10 @@
 package com.appdesk.weatherapp.activity
 
-import android.Manifest
-import android.app.AlertDialog
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.location.Location
-import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.os.Handler
-import android.provider.Settings
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.appdesk.weatherapp.R
@@ -24,7 +16,7 @@ import com.appdesk.weatherapp.fragment.SettingsFragment
 import com.appdesk.weatherapp.utils.ToastUtils
 
 
-class WeatherActivity : AppCompatActivity(), LocationListener {
+class WeatherActivity : AppCompatActivity() {
     //    private var response: ApiResponse?
     val TAG = "WeatherActivity"
     private var locationManager: LocationManager? = null
@@ -56,13 +48,13 @@ class WeatherActivity : AppCompatActivity(), LocationListener {
 
         setCurrentFragment(currentFragment)
 
-        locationManager = getSystemService(
-            LOCATION_SERVICE
-        ) as LocationManager?
-        if (locationManager != null)
-            checkAndGetLocation()
-        else
-            Log.e(TAG, "location manager null")
+        /* locationManager = getSystemService(
+             LOCATION_SERVICE
+         ) as LocationManager?
+         if (locationManager != null)
+             checkAndGetLocation()
+         else
+             Log.e(TAG, "location manager null")*/
 
     }
 
@@ -79,16 +71,6 @@ class WeatherActivity : AppCompatActivity(), LocationListener {
     }
 
     private fun setListeners() {
-        /*  binding.etCity.addTextChangedListener(object : TextWatcher {
-              override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
-              override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-
-              override fun afterTextChanged(s: Editable?) {
-                  if (s?.isNotBlank() == true)
-                      getCurrentWeatherDetails(s.toString())
-              }
-          })*/
 
         binding.bottomAppBar.bottomNavigationMenu.setOnNavigationItemSelectedListener {
             when (it.itemId) {
@@ -117,81 +99,56 @@ class WeatherActivity : AppCompatActivity(), LocationListener {
         binding.pbLoading.isVisible = false
     }
 
-    private fun checkAndGetLocation() {
-        Log.i(TAG, "checkAndGetLocation")
-        if (!locationManager!!.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            OnGPS()
-        } else {
-            getLocation()
-        }
-    }
+    /*   private fun checkAndGetLocation() {
+           Log.i(TAG, "checkAndGetLocation")
+           if (!locationManager!!.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+               OnGPS()
+           } else {
+               getLocation()
+           }
+       }
 
-    override fun onLocationChanged(location: Location) {
-        Log.d(TAG, "location : $location")
-    }
+       override fun onLocationChanged(location: Location) {
+           Log.d(TAG, "location : $location")
+       }
 
-    private fun getLocation() {
-        Log.i(TAG, "getLocation")
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
-        var locationGPS: Location? = null
-        if (locationManager != null) {
-            locationGPS = locationManager!!.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-//            locationGPS = getLastKnownLocation(locationManager!!)
-            if (locationGPS != null) {
-//            val df = DecimalFormat("#.####")
-//            df.roundingMode = RoundingMode.CEILING
-                /*for (Number n : Arrays.asList(12, 123.12345, 0.23, 0.1, 2341234.212431324)) {
-                    Double d = n.doubleValue();
-                    System.out.println(df.format(d));
-                }*/
-                val lat = locationGPS.latitude
-                val lon = locationGPS.longitude
-                currentFragment.getCurrentWeatherDetails(lat, lon)
-//            latitude = df.format(lat).toString()
-//            longitude = df.format(longi).toString()
-            } else {
-                Log.e(TAG, "locationGps null")
-            }
-        } else {
-            Log.e(TAG, "location manager null")
-        }
-    }
+       private fun getLocation() {
+           Log.i(TAG, "getLocation")
+           if (ActivityCompat.checkSelfPermission(
+                   this,
+                   Manifest.permission.ACCESS_FINE_LOCATION
+               ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                   this,
+                   Manifest.permission.ACCESS_COARSE_LOCATION
+               ) != PackageManager.PERMISSION_GRANTED
+           ) {
+               return
+           }
+           var locationGPS: Location? = null
+           if (locationManager != null) {
+               locationManager!!.requestLocationUpdates(
+                   LocationManager.GPS_PROVIDER,
+                   5000,
+                   0F
+               ) {
+                   currentFragment.getCurrentWeatherDetails(it.latitude, it.longitude)
+               }
+           }
+       }
 
-//    private fun getLastKnownLocation(locationManager: LocationManager): Location? {
-////        locationManager = applicationContext.getSystemService(LOCATION_SERVICE) as LocationManager
-//        val providers: List<String> = locationManager.getProviders(true)
-//        var bestLocation: Location? = null
-//        for (provider in providers) {
-//            val l: Location = locationManager.getLastKnownLocation(provider) ?: continue
-//            if (bestLocation == null || l.accuracy < bestLocation.accuracy) {
-//                // Found best last known location: %s", l);
-//                bestLocation = l
-//            }
-//        }
-//        return bestLocation
-//    }
 
-    private fun OnGPS() {
-        Log.i(TAG, "onGPS")
-        val builder = AlertDialog.Builder(this)
-        builder.setMessage("Enable GPS").setCancelable(false).setPositiveButton(
-            "Yes"
-        ) { _, _ -> startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }
-            .setNegativeButton(
-                "No"
-            ) { dialog, _ -> dialog.cancel() }
-        val alertDialog = builder.create()
-        alertDialog.show()
-    }
+       private fun OnGPS() {
+           Log.i(TAG, "onGPS")
+           val builder = AlertDialog.Builder(this)
+           builder.setMessage("Enable GPS").setCancelable(false).setPositiveButton(
+               "Yes"
+           ) { _, _ -> startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }
+               .setNegativeButton(
+                   "No"
+               ) { dialog, _ -> dialog.cancel() }
+           val alertDialog = builder.create()
+           alertDialog.show()
+       }*/
 
     override fun onBackPressed() {
         if (doublePress) {

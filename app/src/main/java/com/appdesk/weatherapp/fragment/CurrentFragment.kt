@@ -1,10 +1,17 @@
 package com.appdesk.weatherapp.fragment
 
-import android.content.Context
+import android.Manifest
+import android.content.Context.LOCATION_SERVICE
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.View
+import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.appdesk.weatherapp.R
@@ -28,36 +35,6 @@ open class CurrentFragment(weatherActivity: WeatherActivity) :
     private var act: WeatherActivity? = null
     private var lat: Double = 0.0
     private var locationManager: LocationManager? = null
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        Log.i(TAG, "onCreate")
-    }
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        Log.i(TAG, "onAttach")
-    }
-
-    /*override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        binding =
-            DataBindingUtil.inflate(inflater, R.layout.fragment_current, container, false)
-        val view: View = binding.root
-        if (this.con == null) {
-            this.con = activity
-            this.act = activity as WeatherActivity?
-        }
-        Log.i(TAG, "onCreateView")
-        return view
-    }*/
-
-    override fun onStart() {
-        super.onStart()
-        Log.i(TAG, "onStart")
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -66,60 +43,54 @@ open class CurrentFragment(weatherActivity: WeatherActivity) :
     }
 
     private fun initView() {
-        /*if (context != null) {
+        if (context != null) {
             locationManager =
                 context!!.getSystemService(
-                    LOCATION_SERVICE::class.java
+                    LOCATION_SERVICE
                 ) as LocationManager?
-//        request = WeatherRequest()
             if (locationManager != null)
                 checkAndGetLocation()
             else
                 Log.e(TAG, "location manager null")
         } else {
             Log.e(TAG, "context null")
-        }*/
-//        callWeatherDataApi(request)
-//        setupSwipeToRefresh() //todo
+        }
     }
 
-    /* private fun checkAndGetLocation() {
-         if (!locationManager!!.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-             OnGPS()
-         } else {
-             getLocation()
-         }
-     }
+    private fun checkAndGetLocation() {
+        if (!locationManager!!.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            OnGPS()
+        } else {
+            getLocation()
+        }
+    }
 
-     private fun getLocation() {
-         if (ActivityCompat.checkSelfPermission(
-                 context!!,
-                 Manifest.permission.ACCESS_FINE_LOCATION
-             ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                 context!!,
-                 Manifest.permission.ACCESS_COARSE_LOCATION
-             ) != PackageManager.PERMISSION_GRANTED
-         ) {
-             return
-         }
-         val locationGPS: Location? =
-             locationManager?.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-         if (locationGPS != null) {
- //            val df = DecimalFormat("#.####")
- //            df.roundingMode = RoundingMode.CEILING
-             *//*for (Number n : Arrays.asList(12, 123.12345, 0.23, 0.1, 2341234.212431324)) {
-                Double d = n.doubleValue();
-                System.out.println(df.format(d));
-            }*//*
-            lat = locationGPS.latitude
-            lon = locationGPS.longitude
-//            latitude = df.format(lat).toString()
-//            longitude = df.format(longi).toString()
+    private fun getLocation() {
+        Log.i(TAG, "getLocation")
+        if (ActivityCompat.checkSelfPermission(
+                context!!,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                context!!,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        var locationGPS: Location? = null
+        if (locationManager != null) {
+            locationManager!!.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER,
+                5000,
+                0F
+            ) {
+                getCurrentWeatherDetails(it.latitude, it.longitude)
+            }
         }
     }
 
     private fun OnGPS() {
-        val builder = AlertDialog.Builder(activity)
+        val builder = AlertDialog.Builder(activity!!)
         builder.setMessage("Enable GPS").setCancelable(false).setPositiveButton(
             "Yes"
         ) { _, _ -> startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }
@@ -128,7 +99,7 @@ open class CurrentFragment(weatherActivity: WeatherActivity) :
             ) { dialog, _ -> dialog.cancel() }
         val alertDialog = builder.create()
         alertDialog.show()
-    }*/
+    }
 
     fun getCurrentWeatherDetails(lat: Double, lon: Double) {
         Log.i(TAG, "getCurrentWeatherDetails")
@@ -163,7 +134,7 @@ open class CurrentFragment(weatherActivity: WeatherActivity) :
             if (response != null) {
                 if (response.isSuccessful && response.body() != null) {
 //                    binding.textView.text = response.body().toString()
-                    Log.e(TAG, "response : ${response.body()}")
+                    Log.e(TAG, "currentWeatherResponse : ${response.body()}")
                     val main = response.body()!!.main
                     val temp = main.temp
                     val tempC = TempUtils.kelvinToCen(temp)

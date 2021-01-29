@@ -2,8 +2,7 @@ package com.appdesk.weatherapp.api
 
 import android.util.Log
 import com.appdesk.weatherapp.enums.PreferenceValue
-import com.appdesk.weatherapp.model.ApiResponse
-import com.appdesk.weatherapp.model.CurrentWeatherRequest
+import com.appdesk.weatherapp.model.*
 import com.appdesk.weatherapp.utils.SharedPreferenceUtil.Companion.sharedPreferences
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -59,16 +58,36 @@ object ApiClient {
     }*/
 
 
-    suspend fun getCurrentWeather(currentWeatherRequest: CurrentWeatherRequest): Response<ApiResponse>? {
+    suspend fun getCurrentWeather(currentWeatherRequest: CurrentWeatherRequest): Response<CurrentWeatherResponse>? {
         Log.i(TAG, "getCurrentWeatherRequest : $currentWeatherRequest")
         return sharedPreferences?.getString(PreferenceValue.API_KEY.name, "")?.let {
             apiInterface.getCurrentWeather(
                 lat = currentWeatherRequest.lat,
                 lon = currentWeatherRequest.lon,
+                apiKey = "3b796b2da6a6702f56b5de97f10efcbe"
+            )
+        }
+    }
+
+    suspend fun getForecast(forecastRequest: ForecastRequest): Response<ForecastResponse>? {
+        return sharedPreferences?.getString(PreferenceValue.API_KEY.name, "")?.let {
+            apiInterface.getForecastReport(
+                lat = forecastRequest.lat,
+                lon = forecastRequest.lon,
+                exclude = "current,minutely,hourly,alerts",
                 apiKey = it
             )
         }
     }
 
-
+    suspend fun getCityHistoryData(cityHistoryRequest: CityHistoryRequest): Response<CityHistoryData>? {
+        return sharedPreferences?.getString(PreferenceValue.API_KEY.name, "")?.let {
+            apiInterface.getCityHistoryData(
+                id = cityHistoryRequest.cityId,
+                type = cityHistoryRequest.type,
+                start = cityHistoryRequest.start,
+                apiKey = it
+            )
+        }
+    }
 }

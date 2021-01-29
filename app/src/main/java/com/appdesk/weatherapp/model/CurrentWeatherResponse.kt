@@ -1,6 +1,6 @@
 package com.appdesk.weatherapp.model
 
-data class ApiResponse(
+data class CurrentWeatherResponse(
     val base: String,
     val clouds: Clouds,
     val cod: Int,
@@ -10,7 +10,7 @@ data class ApiResponse(
     val main: Main,
     val name: String,
     val sys: Sys,
-    val visibility: Int,
+    val timezone: Int,
     val weather: List<Weather>,
     val wind: Wind
 )

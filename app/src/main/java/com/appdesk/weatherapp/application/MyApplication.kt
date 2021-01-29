@@ -35,7 +35,7 @@ class MyApplication : Application() {
         mMyApplication = this
         Log.i(TAG, "onCreate")
         SharedPreferenceUtil.init(this)
-        SharedPreferenceUtil.editor.putString(PreferenceValue.API_KEY.name, "")
+        SharedPreferenceUtil.editor.putString(PreferenceValue.API_KEY.name, "3b796b2da6a6702f56b5de97f10efcbe")
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             Log.e(
                 TAG,
