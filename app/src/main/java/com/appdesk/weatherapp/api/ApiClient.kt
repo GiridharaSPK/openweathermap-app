@@ -3,7 +3,7 @@ package com.appdesk.weatherapp.api
 import android.util.Log
 import com.appdesk.weatherapp.enums.PreferenceValue
 import com.appdesk.weatherapp.model.ApiResponse
-import com.appdesk.weatherapp.model.WeatherRequest
+import com.appdesk.weatherapp.model.CurrentWeatherRequest
 import com.appdesk.weatherapp.utils.SharedPreferenceUtil.Companion.sharedPreferences
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -59,11 +59,12 @@ object ApiClient {
     }*/
 
 
-    suspend fun getWeather(weatherRequest: WeatherRequest): Response<ApiResponse>? {
-        Log.i(TAG, "getWeatherRequest : $weatherRequest")
+    suspend fun getCurrentWeather(currentWeatherRequest: CurrentWeatherRequest): Response<ApiResponse>? {
+        Log.i(TAG, "getCurrentWeatherRequest : $currentWeatherRequest")
         return sharedPreferences?.getString(PreferenceValue.API_KEY.name, "")?.let {
-            apiInterface.getWeather(
-                cityName = weatherRequest.cityName,
+            apiInterface.getCurrentWeather(
+                lat = currentWeatherRequest.lat,
+                lon = currentWeatherRequest.lon,
                 apiKey = it
             )
         }

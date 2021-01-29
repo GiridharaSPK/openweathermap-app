@@ -1,33 +1,34 @@
 package com.appdesk.weatherapp.activity
 
+import android.Manifest
+import android.app.AlertDialog
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
+import android.os.Handler
+import android.provider.Settings
 import android.util.Log
-import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import com.appdesk.weatherapp.R
-import com.appdesk.weatherapp.api.ApiClient
 import com.appdesk.weatherapp.databinding.ActivityWeatherBinding
 import com.appdesk.weatherapp.fragment.CurrentFragment
 import com.appdesk.weatherapp.fragment.DateFragment
 import com.appdesk.weatherapp.fragment.ReportsFragment
 import com.appdesk.weatherapp.fragment.SettingsFragment
-import com.appdesk.weatherapp.model.WeatherRequest
 import com.appdesk.weatherapp.utils.ToastUtils
-import kotlinx.coroutines.launch
-import retrofit2.HttpException
-import java.io.IOException
-import java.util.*
 
-const val TAG = "WeatherActivity"
 
-class WeatherActivity : AppCompatActivity() {
-//    private var response: ApiResponse?
-
+class WeatherActivity : AppCompatActivity(), LocationListener {
+    //    private var response: ApiResponse?
+    val TAG = "WeatherActivity"
+    private var locationManager: LocationManager? = null
+    private var doublePress: Boolean = false
     private lateinit var settingsFragment: SettingsFragment
     private lateinit var dateFragment: DateFragment
     private lateinit var currentFragment: CurrentFragment
@@ -36,26 +37,38 @@ class WeatherActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.i(TAG, "onCreate")
 //        setContentView(R.layout.activity_weather)
         binding = ActivityWeatherBinding.inflate(layoutInflater)
         setContentView(binding.root)
         initView()
         setListeners()
 
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Log.i(TAG, "onStart")
+        currentFragment = CurrentFragment(this)
+        dateFragment = DateFragment(this)
+        reportsFragment = ReportsFragment(this)
+        settingsFragment = SettingsFragment(this)
+
+        setCurrentFragment(currentFragment)
+
+        locationManager = getSystemService(
+            LOCATION_SERVICE
+        ) as LocationManager?
+        if (locationManager != null)
+            checkAndGetLocation()
+        else
+            Log.e(TAG, "location manager null")
 
     }
 
     private fun initView() {
         binding.pbLoading.isVisible = false
         binding.bottomAppBar.bottomNavigationMenu.background = null
-
-        currentFragment = CurrentFragment()
-        dateFragment = DateFragment()
-        reportsFragment = ReportsFragment()
-        settingsFragment = SettingsFragment()
-
-        setCurrentFragment(currentFragment)
-
     }
 
     private fun setCurrentFragment(fragment: Fragment) {
@@ -66,33 +79,29 @@ class WeatherActivity : AppCompatActivity() {
     }
 
     private fun setListeners() {
-        binding.etCity.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+        /*  binding.etCity.addTextChangedListener(object : TextWatcher {
+              override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+              override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
 
-            override fun afterTextChanged(s: Editable?) {
-                if (s?.isNotBlank() == true)
-                    getWeatherDetails(s.toString())
-            }
-        })
+              override fun afterTextChanged(s: Editable?) {
+                  if (s?.isNotBlank() == true)
+                      getCurrentWeatherDetails(s.toString())
+              }
+          })*/
 
         binding.bottomAppBar.bottomNavigationMenu.setOnNavigationItemSelectedListener {
             when (it.itemId) {
                 R.id.it_current -> {
-                    binding.etCity.visibility = View.VISIBLE
                     setCurrentFragment(currentFragment)
                 }
                 R.id.it_report -> {
-                    binding.etCity.visibility = View.VISIBLE
                     setCurrentFragment(reportsFragment)
                 }
                 R.id.it_date -> {
-                    binding.etCity.visibility = View.VISIBLE
                     setCurrentFragment(dateFragment)
                 }
                 R.id.it_settings -> {
-                    binding.etCity.visibility = View.GONE
                     setCurrentFragment(settingsFragment)
                 }
             }
@@ -100,57 +109,99 @@ class WeatherActivity : AppCompatActivity() {
         }
     }
 
-    fun getWeatherDetails(cityName: String) {
+    fun showLoading() {
         binding.pbLoading.isVisible = true
-        lifecycleScope.launch {
-            val response = try {
-                ApiClient.getWeather(WeatherRequest(cityName))
-            } catch (e: IOException) {
-                ToastUtils.showToastShort(
-                    context = this@WeatherActivity,
-                    "Please check your network"
-                )
-                Log.e(TAG, "Caught : ", e)
-                return@launch
-            } catch (e: HttpException) {
-                ToastUtils.showToastShort(
-                    context = this@WeatherActivity,
-                    "Please check your network"
-                )
-                Log.e(TAG, "Caught : ", e)
-                return@launch
-            } catch (e: Exception) {
-                Log.i(TAG, "===========6")
-                ToastUtils.showToastLong(context = this@WeatherActivity, e.toString())
-                Log.e(TAG, "Caught : ", e)
-                return@launch
-            }
-            if (response != null) {
-                if (response.isSuccessful && response.body() != null) {
-//                    binding.textView.text = response.body().toString()
-                    Log.e(TAG, "response : ${response.body()}")
-                    val main = response.body()!!.main
-                    val temp = main.temp
-                    val temp_c = toCen(temp)
-                    val temp_f = toFar(temp)
-                    Log.i(TAG, "C: $temp_c \nF : $temp_f")
-                } else {
-                    binding.etCity.error = "Please enter valid city"
-                }
-            } else {
-                Log.e(TAG, "Null response")
-                ToastUtils.showToastShort(context = this@WeatherActivity, "Response null")
-            }
-            binding.pbLoading.isVisible = false
+    }
+
+    fun hideLoading() {
+        binding.pbLoading.isVisible = false
+    }
+
+    private fun checkAndGetLocation() {
+        Log.i(TAG, "checkAndGetLocation")
+        if (!locationManager!!.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            OnGPS()
+        } else {
+            getLocation()
         }
     }
 
-    private fun toCen(temp: Double): Double {
-        return temp - 273.15
+    override fun onLocationChanged(location: Location) {
+        Log.d(TAG, "location : $location")
     }
 
-    private fun toFar(temp: Double): Double {
-        return 1.8 * (temp - 273) + 32
+    private fun getLocation() {
+        Log.i(TAG, "getLocation")
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        var locationGPS: Location? = null
+        if (locationManager != null) {
+            locationGPS = locationManager!!.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+//            locationGPS = getLastKnownLocation(locationManager!!)
+            if (locationGPS != null) {
+//            val df = DecimalFormat("#.####")
+//            df.roundingMode = RoundingMode.CEILING
+                /*for (Number n : Arrays.asList(12, 123.12345, 0.23, 0.1, 2341234.212431324)) {
+                    Double d = n.doubleValue();
+                    System.out.println(df.format(d));
+                }*/
+                val lat = locationGPS.latitude
+                val lon = locationGPS.longitude
+                currentFragment.getCurrentWeatherDetails(lat, lon)
+//            latitude = df.format(lat).toString()
+//            longitude = df.format(longi).toString()
+            } else {
+                Log.e(TAG, "locationGps null")
+            }
+        } else {
+            Log.e(TAG, "location manager null")
+        }
+    }
+
+//    private fun getLastKnownLocation(locationManager: LocationManager): Location? {
+////        locationManager = applicationContext.getSystemService(LOCATION_SERVICE) as LocationManager
+//        val providers: List<String> = locationManager.getProviders(true)
+//        var bestLocation: Location? = null
+//        for (provider in providers) {
+//            val l: Location = locationManager.getLastKnownLocation(provider) ?: continue
+//            if (bestLocation == null || l.accuracy < bestLocation.accuracy) {
+//                // Found best last known location: %s", l);
+//                bestLocation = l
+//            }
+//        }
+//        return bestLocation
+//    }
+
+    private fun OnGPS() {
+        Log.i(TAG, "onGPS")
+        val builder = AlertDialog.Builder(this)
+        builder.setMessage("Enable GPS").setCancelable(false).setPositiveButton(
+            "Yes"
+        ) { _, _ -> startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }
+            .setNegativeButton(
+                "No"
+            ) { dialog, _ -> dialog.cancel() }
+        val alertDialog = builder.create()
+        alertDialog.show()
+    }
+
+    override fun onBackPressed() {
+        if (doublePress) {
+            super.onBackPressed()
+            return
+        }
+        ToastUtils.showToastShort(this, "Press back again to exit app")
+        Handler().postDelayed({
+            doublePress = false
+        }, 2000)
     }
 
 }

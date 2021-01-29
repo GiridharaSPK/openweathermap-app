@@ -3,4 +3,8 @@
     <string name="welcome">Welcome!</string>
     <string name="enter_username">Enter Username</string>
     <string name="enter">Enter</string>
+    <string name="username">Username</string>
+    <string name="show_temparature">Show Temparature</string>
+    <string name="celsius">Celsius</string>
+    <string name="fahrenheit">Fahrenheit</string>
 </resources>

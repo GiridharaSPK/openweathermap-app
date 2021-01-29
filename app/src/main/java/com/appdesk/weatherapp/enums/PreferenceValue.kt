@@ -1,5 +1,7 @@
 package com.appdesk.weatherapp.enums
 
 enum class PreferenceValue {
-    API_KEY
+    API_KEY,
+    USERNAME,
+    CELSIUS
 }

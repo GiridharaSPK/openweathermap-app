@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -15,10 +16,15 @@ import androidx.core.view.isVisible
 import androidx.databinding.DataBindingUtil
 import com.appdesk.weatherapp.R
 import com.appdesk.weatherapp.databinding.ActivityMainBinding
+import com.appdesk.weatherapp.enums.PreferenceValue
+import com.appdesk.weatherapp.utils.SharedPreferenceUtil
 import com.appdesk.weatherapp.utils.ToastUtils
 import com.appdesk.weatherapp.utils.ToastUtils.Companion.showToastLong
 
+
 class MainActivity : AppCompatActivity() {
+    val TAG = "MainActivity"
+
     private var activityMainBinding: ActivityMainBinding? = null
     private var handler: Handler? = null
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,6 +46,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkForegroundLocationPermissionAndRequest() {
+        Log.d(TAG, "checkForegroundLocationPermissionAndRequest")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val hasLocationPermission = ActivityCompat.checkSelfPermission(
                 this,
@@ -82,6 +89,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onForegroundPermissionGranted(isGrant: Boolean) {
+        Log.d(TAG, "onForegroundPermissionGranted")
         if (!isGrant) {
             showToastLong(this@MainActivity, "Location Permission is required")
             //or showSnackbar
@@ -92,11 +100,11 @@ class MainActivity : AppCompatActivity() {
             checkBackgroundLocationPermissionAndRequest()
         } else {
             showUsernameInput()
-//            openWeatherActivity()
         }
     }
 
     private fun showUsernameInput() {
+        Log.d(TAG, "showUsernameInput")
         activityMainBinding!!.etUsername.isVisible = true
         activityMainBinding!!.tvWelcome.isVisible = false
         activityMainBinding!!.btEnter.isVisible = false
@@ -125,10 +133,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun saveUserName() {
-        activityMainBinding!!.etUsername.text.toString()
+        Log.d(TAG, "saveUserName")
+        SharedPreferenceUtil.editor.putString(
+            PreferenceValue.USERNAME.name,
+            activityMainBinding!!.etUsername.text.toString()
+        )
+        SharedPreferenceUtil.editor.commit()
     }
 
     private fun openWeatherActivity() {
+        Log.d(TAG, "openWeatherActivity")
         handler = Handler()
         handler!!.postDelayed({
             startActivity(Intent(this@MainActivity, WeatherActivity::class.java))
@@ -139,6 +153,7 @@ class MainActivity : AppCompatActivity() {
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     private fun checkBackgroundLocationPermissionAndRequest() {
+        Log.d(TAG, "checkBackgroundLocationPermissionAndRequest")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val hasLocationPermission = ActivityCompat.checkSelfPermission(
                 this,
@@ -159,18 +174,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onBackgroundPermissionGranted(isGrant: Boolean) {
+        Log.d(TAG, "onBackgroundPermissionGranted")
         if (!isGrant) {
             showToastLong(this@MainActivity, "Permissions not granted")
             //or showSnackbar
             finish()
             return
         }
-        handler = Handler()
-        handler!!.postDelayed({
-            startActivity(Intent(this@MainActivity, WeatherActivity::class.java))
-            finish()
-            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
-        }, SPLASHTIME)
+        showUsernameInput()
     }
 
     override fun onDestroy() {

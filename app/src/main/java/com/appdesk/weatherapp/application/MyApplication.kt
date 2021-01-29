@@ -33,8 +33,8 @@ class MyApplication : Application() {
         super.onCreate()
 //        LogUtils.showInfoLog(TAG, "<<<onCreate()")
         mMyApplication = this
-
-        SharedPreferenceUtil(applicationContext)
+        Log.i(TAG, "onCreate")
+        SharedPreferenceUtil.init(this)
         SharedPreferenceUtil.editor.putString(PreferenceValue.API_KEY.name, "")
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             Log.e(
