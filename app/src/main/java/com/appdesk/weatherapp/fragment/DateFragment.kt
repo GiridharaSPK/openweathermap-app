@@ -15,6 +15,9 @@ import retrofit2.HttpException
 import java.io.IOException
 
 class DateFragment(activity: WeatherActivity) : Fragment(R.layout.fragment_date) {
+
+    val TAG = "DateFragment"
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initView()

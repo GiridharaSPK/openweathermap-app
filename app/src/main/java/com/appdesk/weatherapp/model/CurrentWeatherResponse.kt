@@ -1,7 +1,7 @@
 package com.appdesk.weatherapp.model
 
 data class CurrentWeatherResponse(
-    val base: String,
+    val base: String?,
     val clouds: Clouds,
     val cod: Int,
     val coord: Coord,

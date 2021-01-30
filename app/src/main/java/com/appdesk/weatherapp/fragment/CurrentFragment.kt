@@ -4,14 +4,16 @@ import android.Manifest
 import android.content.Context.LOCATION_SERVICE
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
+import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.appdesk.weatherapp.R
@@ -35,6 +37,20 @@ open class CurrentFragment(weatherActivity: WeatherActivity) :
     private var act: WeatherActivity? = null
     private var lat: Double = 0.0
     private var locationManager: LocationManager? = null
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        binding = DataBindingUtil.inflate(inflater!!, R.layout.fragment_current, container, false)
+        val view = binding.root
+//        if (context == null) {
+//            context = activity
+//            activity = activity as DashboardActivity?
+//        }
+        return view
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -75,9 +91,10 @@ open class CurrentFragment(weatherActivity: WeatherActivity) :
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
+            Log.e(TAG, "Location Permission not granted ")
             return
         }
-        var locationGPS: Location? = null
+//        var locationGPS: Location? = null
         if (locationManager != null) {
             locationManager!!.requestLocationUpdates(
                 LocationManager.GPS_PROVIDER,
@@ -86,6 +103,8 @@ open class CurrentFragment(weatherActivity: WeatherActivity) :
             ) {
                 getCurrentWeatherDetails(it.latitude, it.longitude)
             }
+        } else {
+            Log.e(TAG, "location manager null")
         }
     }
 
@@ -137,7 +156,7 @@ open class CurrentFragment(weatherActivity: WeatherActivity) :
                     Log.e(TAG, "currentWeatherResponse : ${response.body()}")
                     val main = response.body()!!.main
                     val temp = main.temp
-                    val tempC = TempUtils.kelvinToCen(temp)
+                    val tempC = TempUtils.kelvinToCen(temp!!)
                     val tempF = TempUtils.kelvinToFar(temp)
                     Log.i(TAG, "C: $tempC \nF : $tempF")
                 } else {
@@ -145,7 +164,8 @@ open class CurrentFragment(weatherActivity: WeatherActivity) :
                 }
             } else {
                 Log.e(TAG, "Null response")
-                ToastUtils.showToastShort(context = activity, "Response null")
+                if (activity != null)
+                    ToastUtils.showToastShort(context = activity, "Response null")
             }
             hideLoading()
         }

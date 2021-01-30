@@ -9,13 +9,18 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
+import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.appdesk.weatherapp.R
 import com.appdesk.weatherapp.activity.WeatherActivity
 import com.appdesk.weatherapp.api.ApiClient
+import com.appdesk.weatherapp.databinding.FragmentReportsBinding
 import com.appdesk.weatherapp.model.ForecastRequest
 import com.appdesk.weatherapp.utils.ToastUtils
 import kotlinx.coroutines.launch
@@ -23,17 +28,34 @@ import retrofit2.HttpException
 import java.io.IOException
 
 class ReportsFragment(activity: WeatherActivity) : Fragment() {
-    val TAG = "CurrentFragment"
+    val TAG = "ReportsFragment"
     private var lon: Double = 0.0
-    private var act: WeatherActivity? = null
     private var lat: Double = 0.0
+    private var act: WeatherActivity? = null
     private var locationManager: LocationManager? = null
+    private lateinit var binding: FragmentReportsBinding
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_reports, container, false)
+        //        if (context == null) {
+//            context = activity
+//            activity = activity as DashboardActivity?
+//        }
+        return binding.root
+    }
+
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initView()
     }
 
     private fun initView() {
+        Log.i(TAG, "initView")
         if (context != null) {
             locationManager =
                 context!!.getSystemService(
@@ -50,6 +72,7 @@ class ReportsFragment(activity: WeatherActivity) : Fragment() {
 
 
     private fun checkAndGetLocation() {
+        Log.i(TAG, "checkAndGetLocation")
         if (!locationManager!!.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             OnGPS()
         } else {
@@ -67,6 +90,7 @@ class ReportsFragment(activity: WeatherActivity) : Fragment() {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
+            Log.e(TAG, "Location permission missing")
             return
         }
         var locationGPS: Location? = null
@@ -82,6 +106,7 @@ class ReportsFragment(activity: WeatherActivity) : Fragment() {
     }
 
     private fun OnGPS() {
+        Log.i(TAG, "onGPS")
         val builder = AlertDialog.Builder(activity!!)
         builder.setMessage("Enable GPS").setCancelable(false).setPositiveButton(
             "Yes"
